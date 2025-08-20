@@ -831,127 +831,40 @@ class FieldArray(Array, metaclass=FieldArrayMeta):
     @classmethod
     def primitive_root_of_unity(cls, n: int) -> Self:
         r"""
-        Finds a primitive $n$-th root of unity in the finite field.
+        Finds a primitive $2n$-th root of unity in the finite field.
 
         Arguments:
-            n: The root of unity.
+            2n: The root of unity.
 
         Returns:
-            The primitive $n$-th root of unity, a 0-D scalar array.
-
-        Raises:
-            ValueError: If no primitive $n$-th roots of unity exist. This happens when $n$ is not a
-                divisor of $p^m - 1$.
-
-        Notes:
-            A primitive $n$-th root of unity $\omega_n$ is such that $\omega_n^n = 1$ and
-            $\omega_n^k \ne 1$ for all $1 \le k \lt n$.
-
-            In $\mathrm{GF}(p^m)$, a primitive $n$-th root of unity exists when $n$ divides
-            $p^m - 1$. Then, the primitive root is $\omega_n = \alpha^{(p^m - 1)/n}$ where $\alpha$
-            is a primitive element of the field.
-
-        Examples:
-            In $\mathrm{GF}(31)$, primitive roots exist for all divisors of 30.
-
-            .. ipython:: python
-
-                GF = galois.GF(31)
-                GF.primitive_root_of_unity(2)
-                GF.primitive_root_of_unity(5)
-                GF.primitive_root_of_unity(15)
-
-            However, they do not exist for $n$ that do not divide 30.
-
-            .. ipython:: python
-                :okexcept:
-
-                GF.primitive_root_of_unity(7)
-
-            For $\omega_5$, one can see that $\omega_5^5 = 1$ and $\omega_5^k \ne 1$ for
-            $1 \le k \lt 5$.
-
-            .. ipython:: python
-
-                root = GF.primitive_root_of_unity(5); root
-                powers = np.arange(1, 5 + 1); powers
-                root ** powers
-
-        Group:
-            Elements
-
-        Order:
-            22
+            The primitive $2n$-th root of unity, a 0-D scalar array.
         """
         verify_isinstance(n, (int, np.ndarray))
-        if not 1 <= n < cls.order:
-            raise ValueError(f"Argument 'n' must be in [1, {cls.order}), not {n}.")
-        if not (cls.order - 1) % n == 0:
-            raise ValueError(f"There are no primitive {n}-th roots of unity in {cls.name}.")
+        if not 1 <= 2 * n < cls.order:
+            raise ValueError(f"Argument '2 * n' must be in [1, {cls.order}), not {2 * n}.")
+        if not (cls.order - 1) % (2 * n) == 0:
+            raise ValueError(f"There are no primitive {2 * n}-th roots of unity in {cls.name}.")
 
-        return cls.primitive_element ** ((cls.order - 1) // n)
+        return cls.primitive_element ** ((cls.order - 1) // (2 * n))
 
     @classmethod
     def primitive_roots_of_unity(cls, n: int) -> Self:
         r"""
-        Finds all primitive $n$-th roots of unity in the finite field.
+        Finds all primitive $2n$-th roots of unity in the finite field.
 
         Arguments:
             n: The root of unity.
 
         Returns:
-            All primitive $n$-th roots of unity, a 1-D array. The roots are sorted in lexicographical order.
+            All primitive $2n$-th roots of unity, a 1-D array. The roots are sorted in lexicographical order.
 
-        Raises:
-            ValueError: If no primitive $n$-th roots of unity exist. This happens when $n$ is not a
-                divisor of $p^m - 1$.
-
-        Notes:
-            A primitive $n$-th root of unity $\omega_n$ is such that $\omega_n^n = 1$ and
-            $\omega_n^k \ne 1$ for all $1 \le k \lt n$.
-
-            In $\mathrm{GF}(p^m)$, a primitive $n$-th root of unity exists when $n$ divides
-            $p^m - 1$. Then, the primitive root is $\omega_n = \alpha^{(p^m - 1)/n}$ where $\alpha$
-            is a primitive element of the field.
-
-        Examples:
-            In $\mathrm{GF}(31)$, primitive roots exist for all divisors of 30.
-
-            .. ipython:: python
-
-                GF = galois.GF(31)
-                GF.primitive_roots_of_unity(2)
-                GF.primitive_roots_of_unity(5)
-                GF.primitive_roots_of_unity(15)
-
-            However, they do not exist for $n$ that do not divide 30.
-
-            .. ipython:: python
-                :okexcept:
-
-                GF.primitive_roots_of_unity(7)
-
-            For $\omega_5$, one can see that $\omega_5^5 = 1$ and $\omega_5^k \ne 1$ for
-            $1 \le k \lt 5$.
-
-            .. ipython:: python
-
-                root = GF.primitive_roots_of_unity(5); root
-                powers = np.arange(1, 5 + 1); powers
-                np.power.outer(root, powers)
-
-        Group:
-            Elements
-
-        Order:
-            22
         """
         if not isinstance(n, (int, np.ndarray)):
             raise TypeError(f"Argument 'n' must be an int, not {type(n)!r}.")
-        if not (cls.order - 1) % n == 0:
-            raise ValueError(f"There are no primitive {n}-th roots of unity in {cls.name}.")
+        if not (cls.order - 1) % (2 * n) == 0:
+            raise ValueError(f"There are no primitive {2 * n}-th roots of unity in {cls.name}.")
 
-        roots = np.unique(cls.primitive_elements ** ((cls.order - 1) // n))
+        roots = np.unique(cls.primitive_elements ** ((cls.order - 1) // (2 * n)))
         roots = np.sort(roots)
 
         return roots

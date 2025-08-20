@@ -185,9 +185,9 @@ class fft_jit(Function):
         x = np.append(x, np.zeros(n - x.size, dtype=x.dtype))
 
         omega = self.field.primitive_root_of_unity(x.size)
+        
         if self._direction == "backward":
-            omega = omega**-1
-
+            omega = omega ** -1
         if self.field.ufunc_mode != "python-calculate":
             y = self.jit(x.astype(np.int64), np.int64(omega))
             y = y.astype(dtype)
@@ -213,33 +213,44 @@ class fft_jit(Function):
     def implementation(x, omega):  # pragma: no cover
         N = x.size
         X = np.zeros(N, dtype=x.dtype)
+        z = MULTIPLY(omega, omega)
 
-        if N == 1:
-            X[0] = x[0]
-        elif N % 2 == 0:
-            # Radix-2 Cooley-Tukey FFT
-            omega2 = MULTIPLY(omega, omega)
-            EVEN = implementation(x[0::2], omega2)  # noqa: F821
-            ODD = implementation(x[1::2], omega2)  # noqa: F821
+        # if N == 1:
+        #     X[0] = x[0]
+        # elif N % 2 == 0:
+        #     # Radix-2 Cooley-Tukey FFT
+        #     omega2 = MULTIPLY(omega, omega)
+        #     EVEN = fft_jit.implementation_2(x[0::2], omega2)
+        #     ODD = fft_jit.implementation_2(x[1::2], omega2)
 
-            twiddle = 1
-            for k in range(0, N // 2):
-                ODD[k] = MULTIPLY(ODD[k], twiddle)
-                twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
+        #     twiddle = 1
+        #     for k in range(0, N // 2):
+        #         ODD[k] = MULTIPLY(ODD[k], twiddle)
+        #         twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
 
-            for k in range(0, N // 2):
-                X[k] = ADD(EVEN[k], ODD[k])
-                X[k + N // 2] = SUBTRACT(EVEN[k], ODD[k])
-        else:
-            # DFT with O(N^2) complexity
-            twiddle = 1
-            for k in range(0, N):
-                factor = 1
-                for j in range(0, N):
-                    X[k] = ADD(X[k], MULTIPLY(x[j], factor))
-                    factor = MULTIPLY(factor, twiddle)  # Factor is omega^(j*k)
-                twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
-
+        #     for k in range(0, N // 2):
+        #         X[k] = ADD(EVEN[k], ODD[k])
+        #         X[k + N // 2] = SUBTRACT(EVEN[k], ODD[k])
+        # else:
+        # DFT with O(N^2) complexity
+        # twiddle = 1
+        # for k in range(0, N):
+        #     factor = 1
+        #     for j in range(0, N):
+        #         X[k] = ADD(X[k], MULTIPLY(x[j], factor))
+        #         factor = MULTIPLY(factor, twiddle)  # Factor is omega^(j*k)
+        #     twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
+        
+        # DFT with O(N^2) complexity
+        twiddle = 1
+        for k in range(0, N):
+            factor = 1
+            temp = 1
+            for j in range(0, N):
+                X[k] = ADD(X[k], MULTIPLY(x[j], MULTIPLY(factor, temp)))
+                temp = MULTIPLY(temp, omega) # Temp is omega^j 
+                factor = MULTIPLY(factor, twiddle)  # Factor is omega^(2*j*k)
+            twiddle = MULTIPLY(twiddle, z)  # Twiddle is omega^(2*k)
         return X
 
     # Need a separate implementation for pure-Python to call the static method. It would be nice to avoid the
@@ -249,6 +260,7 @@ class fft_jit(Function):
     def implementation_2(x, omega):
         N = x.size
         X = np.zeros(N, dtype=x.dtype)
+        z = MULTIPLY(omega, omega)
 
         if N == 1:
             X[0] = x[0]
@@ -271,11 +283,12 @@ class fft_jit(Function):
             twiddle = 1
             for k in range(0, N):
                 factor = 1
+                temp = 1
                 for j in range(0, N):
-                    X[k] = ADD(X[k], MULTIPLY(x[j], factor))
-                    factor = MULTIPLY(factor, twiddle)  # Factor is omega^(j*k)
-                twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
-
+                    X[k] = ADD(X[k], MULTIPLY(x[j], MULTIPLY(factor, temp)))
+                    temp = MULTIPLY(temp, omega) # Temp is omega^j 
+                    factor = MULTIPLY(factor, twiddle)  # Factor is omega^(2*j*k)
+                twiddle = MULTIPLY(twiddle, z)  # Twiddle is omega^(2*k)
         return X
 
     @property
@@ -290,6 +303,102 @@ class ifft_jit(fft_jit):
     """
 
     _direction = "backward"
+    @staticmethod
+    def implementation(x, omega):
+        N = x.size
+        X = np.zeros(N, dtype=x.dtype)
+        
+        # omega is multiplicative inverse of omega (w^-1 mod q)
+        inv_omega = omega
+        inv_z = MULTIPLY(inv_omega, inv_omega)
+        
+        # if N == 1:
+        #     X[0] = x[0]
+        # elif N % 2 == 0:
+        #     # Radix-2 Cooley-Tukey FFT
+        #     omega2 = MULTIPLY(omega, omega)
+        #     EVEN = fft_jit.implementation_2(x[0::2], omega2)
+        #     ODD = fft_jit.implementation_2(x[1::2], omega2)
+
+        #     twiddle = 1
+        #     for k in range(0, N // 2):
+        #         ODD[k] = MULTIPLY(ODD[k], twiddle)
+        #         twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
+
+        #     for k in range(0, N // 2):
+        #         X[k] = ADD(EVEN[k], ODD[k])
+        #         X[k + N // 2] = SUBTRACT(EVEN[k], ODD[k])
+        # else:
+        # DFT with O(N^2) complexity
+        # twiddle = 1
+        # for k in range(0, N):
+        #     factor = 1
+        #     for j in range(0, N):
+        #         X[k] = ADD(X[k], MULTIPLY(x[j], factor))
+        #         factor = MULTIPLY(factor, twiddle)  # Factor is omega^(j*k)
+        #     twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
+        
+        # DFT with O(N^2) complexity
+        
+        twiddle = 1
+        temp = 1
+        for k in range(0, N):
+            factor = 1
+            for j in range(0, N):
+                X[k] = ADD(X[k], MULTIPLY(x[j], MULTIPLY(factor, temp)))
+                factor = MULTIPLY(factor, twiddle)  # Factor is omega^(-2*j*k)
+            temp = MULTIPLY(temp, inv_omega) # Temp is omega^(-k)
+            twiddle = MULTIPLY(twiddle, inv_z)  # Twiddle is omega^(-2*k)
+
+        return X
+    
+    @staticmethod
+    def implementation_2(x, omega):
+        N = x.size
+        X = np.zeros(N, dtype=x.dtype)
+        z = MULTIPLY(omega, omega)
+        inv_omega = omega**-1
+        inv_z = z**-1
+        
+        # if N == 1:
+        #     X[0] = x[0]
+        # elif N % 2 == 0:
+        #     # Radix-2 Cooley-Tukey FFT
+        #     omega2 = MULTIPLY(omega, omega)
+        #     EVEN = fft_jit.implementation_2(x[0::2], omega2)
+        #     ODD = fft_jit.implementation_2(x[1::2], omega2)
+
+        #     twiddle = 1
+        #     for k in range(0, N // 2):
+        #         ODD[k] = MULTIPLY(ODD[k], twiddle)
+        #         twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
+
+        #     for k in range(0, N // 2):
+        #         X[k] = ADD(EVEN[k], ODD[k])
+        #         X[k + N // 2] = SUBTRACT(EVEN[k], ODD[k])
+        # else:
+        # DFT with O(N^2) complexity
+        # twiddle = 1
+        # for k in range(0, N):
+        #     factor = 1
+        #     for j in range(0, N):
+        #         X[k] = ADD(X[k], MULTIPLY(x[j], factor))
+        #         factor = MULTIPLY(factor, twiddle)  # Factor is omega^(j*k)
+        #     twiddle = MULTIPLY(twiddle, omega)  # Twiddle is omega^k
+        
+        # DFT with O(N^2) complexity
+        twiddle = 1
+        temp = 1
+        for k in range(0, N):
+            factor = 1
+            
+            for j in range(0, N):
+                X[k] = ADD(X[k], MULTIPLY(x[j], MULTIPLY(factor, temp)))
+                factor = MULTIPLY(factor, twiddle)  # Factor is omega^(-2*j*k)
+            temp = MULTIPLY(temp, inv_omega) # Temp is omega^(-k)
+            twiddle = MULTIPLY(twiddle, inv_z)  # Twiddle is omega^(-2*k)
+
+        return X
 
 
 ###############################################################################
