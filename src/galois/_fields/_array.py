@@ -845,6 +845,7 @@ class FieldArray(Array, metaclass=FieldArrayMeta):
         if not (cls.order - 1) % (2 * n) == 0:
             raise ValueError(f"There are no primitive {2 * n}-th roots of unity in {cls.name}.")
 
+        # print(f"Found primitive {2 * n}-th root of unity: {cls.primitive_element ** ((cls.order - 1) // (2 * n))}")
         return cls.primitive_element ** ((cls.order - 1) // (2 * n))
 
     @classmethod

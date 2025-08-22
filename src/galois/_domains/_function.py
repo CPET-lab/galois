@@ -230,8 +230,7 @@ class fft_jit(Function):
             for k in range(0, N // 2):
                 X[k] = ADD(EVEN[k], ODD[k])
                 X[k + N // 2] = SUBTRACT(EVEN[k], ODD[k])
-                
-                
+
         else:
             # DFT with O(N^2) complexity
             z = MULTIPLY(omega, omega)
@@ -310,15 +309,22 @@ class ifft_jit(fft_jit):
             X[0] = x[0]
         elif N % 2 == 0:
             # Radix-2 Gentleman-Sande FFT
-            BEFORE = implementation(x[0 : N//2], inv_z)
-            AFTER = implementation(x[N//2 :], inv_z)
+            u = np.zeros(N // 2, dtype=x.dtype)
+            v = np.zeros(N // 2, dtype=x.dtype)
 
-            twiddle = 1
-            for k in range(0, N // 2):
-                X[2*k] = MULTIPLY(ADD(BEFORE[k], AFTER[k]), twiddle)
-                X[2*k + 1] = MULTIPLY(SUBTRACT(BEFORE[k], AFTER[k]), twiddle)
+            twiddle = inv_omega
+            for k in range(N // 2):
+                u[k] = ADD(x[k], x[k + N // 2])
+                temp = SUBTRACT(x[k], x[k + N // 2])
+                v[k] = MULTIPLY(temp, twiddle)
                 twiddle = MULTIPLY(twiddle, inv_z)
 
+            even_parts = implementation(u, inv_z)
+            odd_parts = implementation(v, inv_z)
+            
+            for k in range(N // 2):
+                X[2*k] = even_parts[k]
+                X[2*k + 1] = odd_parts[k]
         else:
             # DFT with O(N^2) complexity
             twiddle = 1
@@ -345,15 +351,22 @@ class ifft_jit(fft_jit):
         if N == 1:
             X[0] = x[0]
         elif N % 2 == 0:
-            # Radix-2 Gentleman-Sande FFT
-            EVEN = fft_jit.implementation_2(x[0::2], inv_z)
-            ODD = fft_jit.implementation_2(x[1::2], inv_z)
+            u = np.zeros(N // 2, dtype=x.dtype)
+            v = np.zeros(N // 2, dtype=x.dtype)
 
-            twiddle = 1
-            for k in range(0, N):
-                X[2*k] = MULTIPLY(ADD(EVEN[k], ODD[k]), inv_z)
-                X[2*k + 1] = MULTIPLY(SUBTRACT(EVEN[k], ODD[k]), inv_z)
-                twiddle = MULTIPLY(twiddle, inv_z)  # Twiddle is omega^(-2k)
+            twiddle = inv_omega
+            for k in range(N // 2):
+                u[k] = ADD(x[k], x[k + N // 2])
+                temp = SUBTRACT(x[k], x[k + N // 2])
+                v[k] = MULTIPLY(temp, twiddle)
+                twiddle = MULTIPLY(twiddle, inv_z)
+
+            even_parts = ifft_jit.implementation_2(u, inv_z)
+            odd_parts = ifft_jit.implementation_2(v, inv_z)
+
+            for k in range(N // 2):
+                X[2*k] = even_parts[k]
+                X[2*k + 1] = odd_parts[k]
 
         else:
         # DFT with O(N^2) complexity
