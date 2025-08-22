@@ -84,7 +84,8 @@ def fast_remainder_negacyclic(p, n):
 # 예제 사용
 if __name__ == "__main__":
     n = 2**3
-    q = find_ntt_prime(30, n)
+    # q = find_ntt_prime(30, n)
+    q = 607613921
     GF = galois.GF(q)
     
     a = [1, 1, 1, 1, 1, 1, 1, 1]
@@ -92,8 +93,11 @@ if __name__ == "__main__":
     
     start_time = time.time()
     ntt_a = galois.ntt(x=GF(a), size=n)
+    print("NTT a : ", ntt_a)
     end_time = time.time()
     print(f"NTT of a took {end_time - start_time:.6f} seconds")
+    
+    
     ntt_b = galois.ntt(x=GF(b), size=n)
     mul_res = [a * b for a, b in zip(ntt_a, ntt_b)]
     intt_mul_res = galois.intt(X=GF(mul_res), size=n).tolist()
