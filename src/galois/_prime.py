@@ -9,6 +9,7 @@ import functools
 import itertools
 import math
 import random
+from typing import List
 
 import numpy as np
 
@@ -1382,6 +1383,23 @@ def divisor_sigma(n: int, k: int = 1) -> int:
 ###############################################################################
 # Integer tests
 ###############################################################################
+
+
+def balanced_mod(num: int, q: int) -> int:
+    """
+    Returns the balanced modulus of a number in Z_q.
+    The result is in the range of [-q/2, q/2).
+    """
+    if num >= q // 2:
+        return num - q
+    return num
+
+@export
+def balanced_mod_vector(vec: List[int], q: int) -> List[int]:
+    """
+    Applies balanced modulus to each element of the vector `vec`.
+    """
+    return [balanced_mod(x, q) for x in vec]
 
 @export
 def ntt_prime(bits: int, n: int) -> int:

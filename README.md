@@ -45,35 +45,32 @@ pip install git+https://github.com/CPET-lab/galois.git
 if __name__ == "__main__":
   	
     # n : degree of negacyclic polynomial (x^n + 1)
-    n = 2**10
-    q = find_ntt_prime(30, n)
+    n = 2**3
     
+    # bits : bit length of q
+    # searches for a prime `q` of the form q = 2n * integer + 1
+    q = galois.ntt_prime(bits=120, n=n)
+
+   	# set galois Field, q is order of Field.
     GF = galois.GF(q)
 
-    a = [1 for _ in range(n)]
-    b = [5 for _ in range(n)]
+    a = [1, 1, 1, 1, 1, 1, 1, 1] # 1 + x + x^2 + x^3 + ... + x^7
+    b = [5, 5, 5, 5, 5, 5, 5, 5] # 5 + 5x + 5x^2 + ... + 5x^7
 
-    start_time = time.time()
     ntt_a = galois.ntt(x=GF(a), size=n)
-    # print("NTT a : ", ntt_a)
-    end_time = time.time()
-    print(f"NTT of a took {end_time - start_time:.6f} seconds")
-    
-    
     ntt_b = galois.ntt(x=GF(b), size=n)
+    
+    # element wise multiplication
     mul_res = [a * b for a, b in zip(ntt_a, ntt_b)]
     intt_mul_res = galois.intt(X=GF(mul_res), size=n).tolist()
+    # set element in range of [-q/2, q/2)
     intt_mul_res = balanced_mod_vector(intt_mul_res, q)
-    print(intt_mul_res[:10])
+    print(intt_mul_res)
+    
+    result : [-30, -20, -10, 0, 10, 20, 30, 40] # -30 -20x -10x^2 + ... + 30x^6 + 40x^7
 `````
 
-
-
-
-
 ---
-
-
 
 The `galois` library is a Python 3 package that extends NumPy arrays to operate over finite fields.
 
