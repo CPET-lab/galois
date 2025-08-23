@@ -15,6 +15,66 @@
   <a href="https://twitter.com/galois_py"><img src="https://img.shields.io/static/v1?label=follow&message=@galois_py&color=blue&logo=twitter"></a>
 </div>
 
+
+# NTT, INTT 부분 수정 (for $\mathbb{F}[x]/x^n+1$ )
+
+### 설치 방법
+
+`````python
+# 해당 라이브러리를 사용할 프로젝트에서 실행
+# venv 가상환경을 적용
+
+# 1. window
+# 가상환경 실행
+python -m venv venv
+source venv/Scripts/activate
+
+# 2. mac
+# 가상환경 실행
+python3 -m venv venv
+source venv/bin/activate
+
+# 설치(window, mac 공통)
+pip install git+https://github.com/CPET-lab/galois.git
+`````
+
+### 예제
+
+`````python
+
+if __name__ == "__main__":
+  	
+    # n : degree of negacyclic polynomial (x^n + 1)
+    n = 2**10
+    q = find_ntt_prime(30, n)
+    
+    GF = galois.GF(q)
+
+    a = [1 for _ in range(n)]
+    b = [5 for _ in range(n)]
+
+    start_time = time.time()
+    ntt_a = galois.ntt(x=GF(a), size=n)
+    # print("NTT a : ", ntt_a)
+    end_time = time.time()
+    print(f"NTT of a took {end_time - start_time:.6f} seconds")
+    
+    
+    ntt_b = galois.ntt(x=GF(b), size=n)
+    mul_res = [a * b for a, b in zip(ntt_a, ntt_b)]
+    intt_mul_res = galois.intt(X=GF(mul_res), size=n).tolist()
+    intt_mul_res = balanced_mod_vector(intt_mul_res, q)
+    print(intt_mul_res[:10])
+`````
+
+
+
+
+
+---
+
+
+
 The `galois` library is a Python 3 package that extends NumPy arrays to operate over finite fields.
 
 > Enjoying the library? Give us a :star: on [GitHub](https://github.com/mhostetter/galois)!

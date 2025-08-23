@@ -827,14 +827,14 @@ class FieldArray(Array, metaclass=FieldArrayMeta):
                 string += print_element(Z[i, j]).rjust(N) + " "
 
         return string
-
+        
     @classmethod
     def primitive_root_of_unity(cls, n: int) -> Self:
         r"""
         Finds a primitive $2n$-th root of unity in the finite field.
 
         Arguments:
-            2n: The root of unity.
+            n: half root of unity -> to make 2*n
 
         Returns:
             The primitive $2n$-th root of unity, a 0-D scalar array.
@@ -854,7 +854,7 @@ class FieldArray(Array, metaclass=FieldArrayMeta):
         Finds all primitive $2n$-th roots of unity in the finite field.
 
         Arguments:
-            n: The root of unity.
+            n: half root of unity -> to make 2*n
 
         Returns:
             All primitive $2n$-th roots of unity, a 1-D array. The roots are sorted in lexicographical order.

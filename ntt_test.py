@@ -1,5 +1,4 @@
 import random
-import secrets
 import time
 from typing import List
 import gmpy2
@@ -23,42 +22,53 @@ def balanced_mod_vector(vec: List[int], q: int) -> List[int]:
     """
     return [balanced_mod(x, q) for x in vec]
 
-def find_ntt_prime(bits, n):
-    """
 
+# def ntt_prime(bits: int, n: int) -> int:
+#     """
+#     Finds a prime `q` suitable for an NTT of order `n` with a specified bit length.
+#     This function utilizes features from the `galois` library.
+
+#     It searches for a prime `q` of the form `q = 2nk + 1`.
+
+#     Inputs:
+#         bits (int): The desired number of bits for the prime (e.g., 120).
+#         n (int): The order of the NTT (e.g., 2048).
+
+#     Output:
+#         int: The prime `q` that satisfies the conditions.
+#     """
+#     if not isinstance(bits, int) or bits <= 1:
+#         raise ValueError(f"'bits' must be an integer greater than 1. Received: {bits}")
+#     if not isinstance(n, int) or n <= 0:
+#         raise ValueError(f"'n' must be a positive integer. Received: {n}")
+
+#     divisor = 2 * n
+
+#     # 1. Select a random starting point for the search.
+#     # This ensures that a different prime can be found on each run.
+#     lower_bound_q = 2**(bits - 1)
+#     upper_bound_q = 2**bits
     
-    :param bits: 원하는 소수의 비트 수 (예: 120)
-    :param n: NTT의 차수 (예: 2048)
-    :return: 조건을 만족하는 소수 q (gmpy2.mpz 타입)
-    """
+#     # Starting the search near a multiple of the divisor is more efficient.
+#     # The starting point itself does not need to be prime.
+#     start = random.randint(lower_bound_q, upper_bound_q)
+#     q = (start // divisor) * divisor + 1
+#     if q < start:
+#         q += divisor
     
-    divisor = 2 * n
-    
-    # 1. k의 범위를 계산합니다.
-    lower_bound_q = gmpy2.mpz(2)**(bits - 1)
-    upper_bound_q = gmpy2.mpz(2)**bits
-    
-    lower_bound_k = (lower_bound_q - 1) // divisor
-    upper_bound_k = (upper_bound_q - 1) // divisor
-    
-    print(f"Finding a {bits}-bit prime q such that (q-1) is a multiple of {divisor}...")
-    print(f"Searching for k in range [{lower_bound_k}, {upper_bound_k}]")
-    
-    # 2. 소수를 찾을 때까지 k를 무작위로 선택하고 테스트합니다.
-    while True:
-        # secrets.randbelow는 정수 상한값을 받아 0부터 상한값-1까지의 난수를 생성
-        k_range = upper_bound_k - lower_bound_k
-        random_offset = secrets.randbelow(k_range)
-        k = lower_bound_k + random_offset
+#     # 2. Use galois.next_prime() to find the next prime and check if it meets the criteria.
+#     while True:
+#         # First, check if the current `q` is within the valid range and is a prime that satisfies the condition.
+#         if q < upper_bound_q and galois.is_prime(q):
+#             if (q - 1) % divisor == 0:
+#                 return q
         
-        # 후보 소수 q 계산
-        q = k * divisor + 1
-        
-        # 3. gmpy2.is_prime()으로 소수인지 판별합니다.
-        # 이 함수는 밀러-라빈 테스트를 사용하며, 매우 신뢰도가 높습니다.
-        if gmpy2.is_prime(q):
-            print(f"\nFound prime! q = {q}")
-            return int(q)
+#         # Find the next prime candidate.
+#         q = galois.next_prime(q)
+
+#         # If the search exceeds the bit range, raise an exception.
+#         if q >= upper_bound_q:
+#             raise RuntimeError(f"Could not find a suitable prime within the {bits}-bit range.")
 
 def fast_remainder_negacyclic(p, n):
     """
@@ -83,8 +93,8 @@ def fast_remainder_negacyclic(p, n):
 
 # 예제 사용
 if __name__ == "__main__":
-    n = 2**10
-    q = find_ntt_prime(30, n)
+    n = 2**3
+    q = galois.ntt_prime(120, n)
 
     # 아래는 n = 2**4 일 때의 q
     # q = 698018593

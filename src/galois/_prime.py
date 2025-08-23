@@ -1383,6 +1383,53 @@ def divisor_sigma(n: int, k: int = 1) -> int:
 # Integer tests
 ###############################################################################
 
+@export
+def ntt_prime(bits: int, n: int) -> int:
+        """
+        Finds a prime `q` suitable for an NTT of order `n` with a specified bit length.
+        This function utilizes features from the `galois` library.
+
+        It searches for a prime `q` of the form `q = 2nk + 1`.
+
+        Inputs:
+            bits (int): The desired number of bits for the prime (e.g., 120).
+            n (int): The order of the NTT (e.g., 2048).
+
+        Output:
+            int: The prime `q` that satisfies the conditions.
+        """
+        if not isinstance(bits, int) or bits <= 1:
+            raise ValueError(f"'bits' must be an integer greater than 1. Received: {bits}")
+        if not isinstance(n, int) or n <= 0:
+            raise ValueError(f"'n' must be a positive integer. Received: {n}")
+
+        divisor = 2 * n
+
+        # 1. Select a random starting point for the search.
+        # This ensures that a different prime can be found on each run.
+        lower_bound_q = 2**(bits - 1)
+        upper_bound_q = 2**bits
+        
+        # Starting the search near a multiple of the divisor is more efficient.
+        # The starting point itself does not need to be prime.
+        start = random.randint(lower_bound_q, upper_bound_q)
+        q = (start // divisor) * divisor + 1
+        if q < start:
+            q += divisor
+        
+        # 2. Use galois.next_prime() to find the next prime and check if it meets the criteria.
+        while True:
+            # First, check if the current `q` is within the valid range and is a prime that satisfies the condition.
+            if q < upper_bound_q and is_prime(q):
+                if (q - 1) % divisor == 0:
+                    return q
+            
+            # Find the next prime candidate.
+            q = next_prime(q)
+
+            # If the search exceeds the bit range, raise an exception.
+            if q >= upper_bound_q:
+                raise RuntimeError(f"Could not find a suitable prime within the {bits}-bit range.")
 
 @export
 def is_prime(n: int) -> bool:

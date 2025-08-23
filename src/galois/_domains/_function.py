@@ -301,7 +301,7 @@ class ifft_jit(fft_jit):
         N = x.size
         X = np.zeros(N, dtype=x.dtype)
         
-        # omega is multiplicative inverse of omega (w^-1 mod q)
+        # inv_omega is multiplicative inverse of omega (w^-1 mod q)
         inv_omega = omega
         inv_z = MULTIPLY(inv_omega, inv_omega)
         
