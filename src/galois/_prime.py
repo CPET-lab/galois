@@ -9,6 +9,7 @@ import functools
 import itertools
 import math
 import random
+import secrets
 from typing import List
 
 import numpy as np
@@ -1420,34 +1421,31 @@ def ntt_prime(bits: int, n: int) -> int:
             raise ValueError(f"'bits' must be an integer greater than 1. Received: {bits}")
         if not isinstance(n, int) or n <= 0:
             raise ValueError(f"'n' must be a positive integer. Received: {n}")
-
+    
         divisor = 2 * n
-
-        # 1. Select a random starting point for the search.
-        # This ensures that a different prime can be found on each run.
+        
         lower_bound_q = 2**(bits - 1)
         upper_bound_q = 2**bits
-        
-        # Starting the search near a multiple of the divisor is more efficient.
-        # The starting point itself does not need to be prime.
-        start = random.randint(lower_bound_q, upper_bound_q)
-        q = (start // divisor) * divisor + 1
-        if q < start:
-            q += divisor
-        
-        # 2. Use galois.next_prime() to find the next prime and check if it meets the criteria.
-        while True:
-            # First, check if the current `q` is within the valid range and is a prime that satisfies the condition.
-            if q < upper_bound_q and is_prime(q):
-                if (q - 1) % divisor == 0:
-                    return q
-            
-            # Find the next prime candidate.
-            q = next_prime(q)
 
-            # If the search exceeds the bit range, raise an exception.
+        lower_bound_k = (lower_bound_q - 1) // divisor
+        upper_bound_k = (upper_bound_q - 1) // divisor
+        
+        # print(f"Finding a {bits}-bit prime q such that (q-1) is a multiple of {divisor}...")
+        # print(f"Searching for k in range [{lower_bound_k}, {upper_bound_k}]")
+        
+        while True:
+            k_range = upper_bound_k - lower_bound_k
+            random_offset = secrets.randbelow(k_range)
+            k = lower_bound_k + random_offset
+            
+            q = k * divisor + 1
+            
+            if is_prime(q):
+                return int(q)
+
             if q >= upper_bound_q:
                 raise RuntimeError(f"Could not find a suitable prime within the {bits}-bit range.")
+            
 
 @export
 def is_prime(n: int) -> bool:
